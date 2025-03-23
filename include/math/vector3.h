@@ -14,6 +14,12 @@ typedef struct {
  */
 Vec3 vec3(float x, float y, float z);
 
+#ifdef __APPLE__
+
+Vec3 gvec3Add(Vec3 v1, Vec3 v2);
+
+#endif
+
 /**
  * @brief   Adds two 3D vectors and returns a new 3D vector.
  * @param   v1 First vector.

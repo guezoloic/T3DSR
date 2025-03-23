@@ -1,5 +1,4 @@
 #include <math.h>
-#include <stdlib.h>
 #include <float.h>
 
 #include "math/vector3.h"
