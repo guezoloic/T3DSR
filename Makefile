@@ -1,55 +1,72 @@
+NME = $(shell uname)
+
 EXE = t3dsr
-TEXE = t3dsr_test
+TXE = t3dsr_test
 
 INC = include
 SRC = src
 TST = test
 BLD = build
 
-DDIR = $(BLD)/debug
-TDIR = $(BLD)/test
+DIR = $(BLD)/debug
+TDR = $(BLD)/test
 
-CC = clang
+CC = clang 
 CFLAGS = -Wall -Wextra -I$(INC) -g
+LDFLAGS = 
 
 SRCS := $(shell find $(SRC) -name "*.c")
-OBJS := $(SRCS:$(SRC)/%.c=$(DDIR)/%.o)
+OBJS := $(SRCS:$(SRC)/%.c=$(DIR)/%.o)
 
+ifeq ($(NME), Darwin)
+	LDFLAGS += -ObjC -framework Foundation -framework Metal
+	MSRCS += $(shell find $(SRC) -name "*.m")
+	SRCS += $(MSRCS)
+	OBJS += $(MSRCS:$(SRC)/%.m=$(DIR)/%.o)
+endif
+
+.PHONY: all clean run test debug
 all: $(EXE)
-.PHONY: all
 
-$(EXE): $(OBJS) | $(DDIR)
-	@$(CC) $^ -o $(BLD)/$@
+$(EXE): $(OBJS) | $(DIR)
+	@$(CC) $(CFLAGS) $^ -o $(BLD)/$@ $(LDFLAGS)
 
-$(DDIR):
-	@mkdir -p $(DDIR)
+$(DIR):
+	@mkdir -p $(DIR)
 
-$(DDIR)/%.o: $(SRC)/%.c | $(DDIR)
+$(DIR)/%.o: $(SRC)/%.c | $(DIR)
 	@mkdir -p $(dir $@)
 	@$(CC) $(CFLAGS) -c $< -o $@
 
+$(DIR)/%.o: $(SRC)/%.m | $(DIR)
+	@mkdir -p $(dir $@)
+	@$(CC) -x objective-c $(CFLAGS) -c $< -o $@
+
 clean:
-	@rm -rf $(BLD) $(EXE)
+	@rm -rf $(BLD) $(EXE) $(TXE)
 
 run: $(EXE)
 	@./$(BLD)/$(EXE)
 
 TSRCS := $(shell find $(TST) -name "*.c")
-TOBJS := $(TSRCS:$(TST)/%.c=$(TDIR)/%.o) \
-	$(filter-out $(DDIR)/main.o, $(OBJS))
+TOBJS := $(TSRCS:$(TST)/%.c=$(TDR)/%.o) \
+	$(filter-out $(DIR)/main.o, $(OBJS))
 
 debug:
-	@echo "$(OBJS)\n$(TOBJS)"
+	@echo "SRCS : $(SRCS)"
+	@echo "TSRCS: $(TSRCS)"
+	@echo "OBJS : $(OBJS)"
+	@echo "TOBJS: $(TOBJS)"
 
-$(TDIR)/%.o: $(TST)/%.c | $(TDIR)
+$(TDR)/%.o: $(TST)/%.c | $(TDR)
 	@mkdir -p $(dir $@)
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-$(TDIR):
-	@mkdir -p $(TDIR)
+$(TDR):
+	@mkdir -p $(TDR)
 
-$(TEXE): $(TOBJS) | $(TDIR) $(DDIR)
-	@$(CC) $^ -o $(BLD)/$@
+$(TXE): $(TOBJS) | $(TDR) $(DIR)
+	@$(CC) $^ -o $(BLD)/$@ $(LDFLAGS)
 
-test: $(TEXE)
-	@./$(BLD)/$(TEXE)
+test: $(TXE)
+	@./$(BLD)/$(TXE)
